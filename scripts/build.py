@@ -51,6 +51,19 @@ def build(root=ROOT):
     with tempfile.TemporaryDirectory(prefix="coolcode-tool-") as temporary:
         stage = Path(temporary) / "site"
         shutil.copytree(web, stage)
+        from collect import validate
+        import gzip, hashlib
+        payload = validate(json.loads((root / "data/current.json").read_text()))
+        history = json.loads((root / "data/history.json").read_text())
+        if not history: raise ValueError("Missing capture history")
+        for entry in history:
+            archived = root / entry["file"]
+            if not archived.resolve().is_relative_to((root / "archive").resolve()): raise ValueError("Unsafe archive path")
+            raw = gzip.decompress(archived.read_bytes())
+            if hashlib.sha256(raw).hexdigest() != entry["sha256"]: raise ValueError("Archive integrity mismatch")
+            validate(json.loads(raw))
+        shutil.copytree(root / "data", stage / "data")
+        shutil.copytree(root / "archive", stage / "archive")
         index = stage / "index.html"
         page = index.read_text(encoding="utf-8")
         for token, key in {"TITLE": "title", "DESCRIPTION": "description", "TOOL_ID": "id", "SOURCE_URL": "source"}.items():

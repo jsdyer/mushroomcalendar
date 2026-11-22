@@ -1,116 +1,53 @@
-# CoolCode browser tool template
+# Mushroom Calendar
 
-A starting point for independent tools at `coolcode.ca/<repo>/`: a working local-text
-example, responsive UI, Python standard-library build, Node tests, PR checks and Pages
-publication. No npm install is needed.
-
-## Using the example
+A static field notebook of public iNaturalist fungi observations around Langley, British Columbia and Halifax, Nova Scotia. Compare the seasonal rhythm of three complete years, inspect identification quality and licences, and follow individual records back to their contributors.
 
 <!-- coolcode:guide -->
-The first occurrence of each trimmed line keeps its place. Compare the output with the original text before copying the result.
+Start with research-grade observations, compare the monthly share on each coast, then select a month or taxon to inspect its records. The 2023–2025 calendar describes observation activity, not abundance, edibility or a forecast; obscured records have month-only dates and never appear on the map.
 <!-- /coolcode:guide -->
 
-For a real tool, replace this paragraph with one or two plain-text sentences
-about an example, a limit or how to interpret the results. Keep the source,
-coverage, refresh behaviour and a worked example in this README as appropriate.
-When updating a tool, revise any details its behaviour has changed and keep the
-homepage's shorter data-source sentence in `tool.json` accurate.
-The hub imports the marked note into the catalogue README.
+## Coverage and interpretation
 
-## One-time template setup
+The public `/v1/observations` endpoint is queried for kingdom Fungi (`taxon_id=47170`), observation dates **2023-01-01 through 2025-12-31**, and observation licences **CC0, CC BY or CC BY-NC**. All quality grades are collected. The default UI selects research grade and excludes captive/cultivated records. Unlicensed and other-licensed observations are outside coverage. Fungi includes lichens and other fungi, not only mushrooms.
 
-Enable **Settings → General → Template repository** here. This repository does not
-need Pages enabled: its workflow builds/tests but intentionally skips deployment.
-New copies also skip deployment until `scripts/init.py` sets the tool ID to match
-their repository name. This lets you create the repo before configuring Pages.
+| Area | South | West | North | East |
+|---|---:|---:|---:|---:|
+| Langley, BC | 49.02 | −122.80 | 49.20 | −122.52 |
+| Halifax, NS | 44.56 | −63.70 | 44.74 | −63.45 |
 
-## Start a new tool
+These are fixed regional rectangles including neighbouring communities, not administrative boundaries. Bounding-box searches use publicly available coordinates; obscured locations may be assigned to a neighbouring area. Private and locationless records cannot be represented by this geographic query. Each snapshot includes exact request URLs, initial source totals, returned/included counts, skipped invalid counts, page receipts and SHA-256 response hashes. Full-query completeness concerns those filters only. The API does not provide a transactional snapshot, so edits during collection can affect counts; mismatches fail validation checks before deployment.
 
-1. Select **Use this template → Create a new repository**, choose owner `jsdyer`,
-   a unique lowercase name such as `my-tool`, and public visibility.
-2. Clone the new repository. Use Python 3.12+ and Node 24+.
-3. Set the identity, using a slug that matches the repository name:
+Monthly charts use the recorded month, weekly charts ISO week 1–53; the year filter uses calendar year, so week 1/53 may span year boundaries. Month selection leaves the seasonal overview intact while filtering summary, map and records. Each region's share uses its own selected-record total, so equal percentages do not mean equal numbers of observations. Search, year, quality, licence, accuracy and taxon filters affect both comparison series. Map-cell selection filters the detailed records but leaves the geographic and seasonal context visible.
 
-```sh
-python3 scripts/init.py my-tool --title "My Tool" --description "Describe what this tool does."
-```
+Counts reflect observer effort, accessible trails, weather, identification interest and repeat observations as well as fungi. They are not estimates of abundance, a randomized survey or evidence of absence. Taxa may be identified above species level. Research grade is a community assessment that can change; it is not a food-safety guarantee. This app is not an identification or edibility guide.
 
-Review the category, tags and icon in `tool.json`. `access: "browser"` tells the main
-catalogue that the tool works immediately without installation. `--owner` supports a different
-GitHub owner, but only projects owned by `jsdyer` inherit the CoolCode domain.
+## Source and reuse
 
-4. Replace the example in `web/` and its tests. Update the privacy explanation,
-   source attribution and README to describe the real tool.
-5. Test and preview:
+- [iNaturalist API documentation](https://api.inaturalist.org/v1/docs/)
+- [Official API recommended practices](https://www.inaturalist.org/pages/api+recommended+practices)
+- [Official data quality explanation](https://help.inaturalist.org/en/support/solutions/articles/151000169936)
+- [Official geoprivacy explanation](https://help.inaturalist.org/en/support/solutions/articles/151000169938)
+
+Every record retains the observation ID, contributor login and source licence. The UI links the original observation, where full context and licence terms can be reviewed. Photos are not collected. Individual observation licences govern reuse, including attribution and noncommercial conditions where applicable. The MIT software licence does not relicense source records.
+
+Open coordinates are rounded to a **0.02° geographic grid before persistence**. The grid is roughly 1.5–2 km at these latitudes; source accuracy is retained separately and may be larger. All obscured or private records have coordinates removed and exact observation days reduced to month precision; their weekly fields are removed too. Never add authenticated API access, private coordinates, raw API response archives or more precise geolocation to this collector. Aggregate geographic circles use the grid, not an external map tile service. No browser filters are sent to iNaturalist or retained in browser storage. External source/map links visit the named service; aggregate CoolCode page metrics omit filter values.
+
+## Collection and retained history
+
+`python3 scripts/collect.py` is the explicit online refresh. It uses unauthenticated HTTPS with a named User-Agent, a maximum of 200 results per page, ascending ID cursors, at least 1.1 seconds between requests, bounded response sizes and retries, and at most **50 pages / 10,000 records per region**. An oversized or incomplete query fails rather than silently publishing a truncated seasonal sample. Validation rejects duplicate IDs, unsafe privacy fields and incomplete coverage. New source responses are normalized in memory; exact coordinates and protected days are never saved. Future expansion should use official exports, not unlimited API pagination.
+
+The data window intentionally remains 2023–2025. Weekly rechecks incorporate late uploads, reidentifications and deletions. Changing the window requires an explicit code and documentation update. `captured_at` identifies the newest changed record set; `checked_at` identifies the last successful recheck. When facts change, a content-addressed compressed snapshot is appended under `archive/YYYY-MM/`; the manifest records its integrity hash and added/changed/removed counts. Unchanged checks update freshness without inventing new history. The initial baseline is labelled as such. Old captures remain selectable in the app and downloadable in the repository. These are historical views of API records, not new observations of biological change.
+
+GitHub Actions runs **Sundays at 08:23 UTC**, on manual dispatch, and for source changes. Scheduled/manual main-branch runs collect; pushes and pull requests validate/build saved data offline. Node, Python and CI Chromium checks run before committing a new capture or publishing Pages. Failed collections or checks leave the deployed site unchanged. Optional `HEALTHCHECKS_PING_URL` provides start/success/failure pings if configured. GitHub may suspend schedules after repository inactivity; the app's dates remain visible. No API key is needed.
+
+## Development
 
 ```sh
 node --test tests/*.test.mjs
 python3 -m unittest discover -s tests -v
 python3 scripts/build.py
-python3 -m http.server 8000 --directory dist
 ```
 
-Open `http://localhost:8000/`. The example trims lines, skips blanks and removes exact
-duplicates, preserving first-seen order and capitalization. It processes the text in tab memory. Update that explanation if your app behaves differently.
+The default builder is offline, validates current and retained data, verifies archive hashes, and publishes only `web/`, `data/` and `archive/` to `dist/`. It preserves the last output when validation fails. `data/index.json` is a small freshness/coverage probe for the CoolCode hub. CI runs `tests/browser_smoke.py` at a project subpath, checking filters, weekly charts, archive loading, CSV, safe text and mobile overflow. No runtime or build dependencies beyond Python standard library and browser JavaScript are required. Playwright is test-only. Never commit `dist/`.
 
-CI also tests the browser flow and mobile layout at a project subpath. Replace the
-sample assertions in `tests/browser_smoke.py` when implementing your own UI. To run
-that check locally (optional for ordinary preview):
-
-```sh
-python3 -m venv .venv
-. .venv/bin/activate
-python3 -m pip install -r tests/browser-requirements.txt
-python3 -m playwright install --with-deps chromium
-python3 tests/browser_smoke.py
-```
-
-Playwright is a test-only dependency; the app and its static build do not use it.
-
-## Publish and register
-
-When the actual tool is ready, in the **new tool repository** set **Settings → Pages → Build and deployment →
-Source → GitHub Actions**. Push to `main`, or manually run **Browser tool · Check and
-publish** after enabling Pages. If the initial deployment ran before Pages was enabled,
-enable it and rerun. PRs only check/build and provide a downloadable preview artifact.
-
-Keep `{{VISIT_COUNTER}}` in the page head and `{{ISSUE_LINK}}` in the footer when replacing the starter UI. The build enables these for initialized CoolCode repositories. The shared counter records aggregate opens on coolcode.ca by public tool ID. Toolbox inputs and URL parameters are excluded. The issue link opens a reporting form with the tool already selected.
-
-Keep app-owned asset paths and module imports relative. Check `https://coolcode.ca/my-tool/`.
-Do not add a CNAME or set `coolcode.ca` as this project's custom domain; the account
-site supplies it. Only successful `main` builds deploy.
-
-After verifying the app, copy the reviewed object from `tool.json` into `data/tools.json`
-in [the main site](https://github.com/jsdyer/jsdyer.github.io). Each tool still builds
-independently. Update the hub record when listing metadata changes; the hub is the
-authority for discovery. Ordinary app updates touch only this repository.
-
-The main site separates **Use in your browser** from **Install yourself**. An app
-that asks for a file is still a browser tool. Standalone Linux packages should start
-in their own repositories with their own build/release workflow, rather than copying
-this browser-only scaffold. Their hub record uses `access: "install"`, links to an
-installation guide, and includes `requirements`.
-
-## Files
-
-| Path | Purpose |
-| --- | --- |
-| `tool.json` | Page metadata and a ready-to-copy catalogue record |
-| `web/` | HTML, responsive CSS, DOM interactions and separate model logic |
-| `scripts/build.py` | Escape metadata and build `web/` into `dist/` |
-| `scripts/init.py` | Set a new project's identity |
-| `tests/` | Application and builder tests |
-| `.github/workflows/pages.yml` | Check PRs and publish successful main builds |
-| `AGENTS.md` | Instructions for future coding work |
-
-Namespace optional storage as `coolcode:<tool-id>:<key>`; CoolCode paths share a
-browser origin. Don't save pasted text/uploads by default. Document external APIs
-and send only the information needed for the selected action. Never embed secrets.
-
-Scheduled refresh is opt-in. Validate source data before deploying, display its date,
-and preserve the last good deployment on failure. Public-repository schedules can
-stop after 60 days without repository activity.
-
-Templates don't propagate future edits automatically. Adopt fixes explicitly and
-consider a versioned reusable workflow once several tools confirm the shared process.
-Choose and add the intended software license before distributing a new project.
+Related: [Museum Drawer](https://coolcode.ca/museumdrawer/) · [Fossil Neighbours](https://coolcode.ca/fossilneighbours/).

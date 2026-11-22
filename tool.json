@@ -1,16 +1,22 @@
 {
-  "id": "coolcode-tool-template",
-  "title": "CoolCode Tool Starter",
-  "description": "A browser-only example that trims lines and removes exact duplicates.",
-  "category": "security",
-  "tags": ["text", "lines", "duplicates"],
-  "icon": "scan-search",
-  "url": "/coolcode-tool-template/",
-  "source": "https://github.com/jsdyer/coolcode-tool-template",
+  "id": "mushroomcalendar",
+  "title": "Mushroom Calendar",
+  "description": "Explore when local fungi were observed around Langley and Halifax, with seasonal patterns, quality filters and a privacy-conscious map.",
+  "category": "nature",
+  "tags": [
+    "fungi",
+    "inaturalist",
+    "seasons",
+    "langley",
+    "halifax"
+  ],
+  "icon": "\ud83c\udf44",
+  "url": "/mushroomcalendar/",
+  "source": "https://github.com/jsdyer/mushroomcalendar",
   "hosting": "project",
   "access": "browser",
   "data_info": {
-    "mode": "local",
-    "detail": "The browser reads the text you paste and compares its lines."
+    "mode": "snapshot",
+    "detail": "Public iNaturalist fungi observations from 2023\u20132025 in fixed Langley and Halifax areas, rechecked weekly with retained captures."
   }
 }

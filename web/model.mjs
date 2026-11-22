@@ -1,7 +1,9 @@
-// Keep transformations separate from the DOM so they can be tested directly.
-export function cleanLines(text) {
-  if (typeof text !== 'string') throw new TypeError('Expected text');
-  const lines = text.split(/\r\n|\r|\n/).map(line => line.trim()).filter(Boolean);
-  const unique = [...new Set(lines)];
-  return { text: unique.join('\n'), count: unique.length, removed: lines.length - unique.length };
-}
+export const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+export function filterRecords(records,f={}){return records.filter(r=>(!f.area||f.area==='all'||r.area===f.area)&&(!f.year||f.year==='all'||r.year===Number(f.year))&&(!f.quality||f.quality==='all'||r.quality===f.quality)&&(!f.license||f.license==='all'||r.license===f.license)&&(!f.privacy||f.privacy==='all'||r.privacy===f.privacy)&&(!f.accuracy||f.accuracy==='all'||(r.accuracy!==null&&r.accuracy<=Number(f.accuracy)))&&(!f.month||r.month===Number(f.month))&&(!f.taxon||String(r.taxon_id)===String(f.taxon))&&(!f.search||`${r.name} ${r.common}`.toLowerCase().includes(f.search.toLowerCase()))&&(!f.wild||!r.captive)&&(!f.cell||`${r.latitude},${r.longitude}`===f.cell));}
+export function seasonal(records,mode='month'){const bins=Array(mode==='week'?53:12).fill(0);for(const r of records){const n=mode==='week'?r.week:r.month;if(Number.isInteger(n)&&n>=1&&n<=bins.length)bins[n-1]++;}return bins;}
+export function summary(records){const bins=seasonal(records);return{count:records.length,taxa:new Set(records.map(r=>r.taxon_id)).size,observers:new Set(records.map(r=>r.observer)).size,peak:records.length?MONTHS[bins.indexOf(Math.max(...bins))]:'—',mappable:records.filter(r=>r.latitude!==null&&r.longitude!==null).length};}
+export function topTaxa(records,limit=12){const taxa=new Map();for(const r of records){if(!taxa.has(r.taxon_id))taxa.set(r.taxon_id,{id:r.taxon_id,name:r.name,common:r.common,rank:r.rank,count:0});taxa.get(r.taxon_id).count++;}return[...taxa.values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name)).slice(0,limit);}
+export function cells(records){const map=new Map();for(const r of records){if(r.latitude===null||r.longitude===null)continue;const key=`${r.latitude},${r.longitude}`;if(!map.has(key))map.set(key,{key,latitude:r.latitude,longitude:r.longitude,count:0});map.get(key).count++;}return[...map.values()];}
+const COLUMNS=['id','area','date','name','common','rank','quality','license','observer','privacy','latitude','longitude','accuracy'];
+export function toCSV(records){const cell=v=>{const s=String(v??'');return'"'+(typeof v==='string'&&/^[=+@\-\t\r]/.test(s)?"'"+s:s).replaceAll('"','""')+'"';};return[COLUMNS.join(','),...records.map(r=>COLUMNS.map(c=>cell(r[c])).join(','))].join('\r\n');}
+export function snapshotDelta(before,after){const old=new Map(before.map(r=>[r.id,r])),next=new Map(after.map(r=>[r.id,r]));return{added:[...next.keys()].filter(k=>!old.has(k)).length,removed:[...old.keys()].filter(k=>!next.has(k)).length,changed:[...next.keys()].filter(k=>old.has(k)&&JSON.stringify(old.get(k))!==JSON.stringify(next.get(k))).length};}

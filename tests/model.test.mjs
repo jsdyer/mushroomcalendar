@@ -1,21 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanLines } from '../web/model.mjs';
-test('trims, removes blanks and preserves first-seen order', () => {
-  assert.deepEqual(cleanLines('  Halifax\nLangley\nHalifax\n\nVancouver  '), {
-    text: 'Halifax\nLangley\nVancouver', count: 3, removed: 1,
-  });
-});
-test('supports Windows and old Mac line endings', () => {
-  assert.equal(cleanLines('a\r\nb\ra').text, 'a\nb');
-});
-test('empty text and whitespace produce an empty result', () => {
-  assert.deepEqual(cleanLines(' \n\t'), { text: '', count: 0, removed: 0 });
-});
-test('preserves case and Unicode', () => {
-  assert.equal(cleanLines('Québec\nquébec\n東京\nQuébec').text, 'Québec\nquébec\n東京');
-});
-test('treats markup as ordinary text', () => {
-  assert.equal(cleanLines('<script>alert(1)</script>\n<script>alert(1)</script>').text, '<script>alert(1)</script>');
-});
-test('rejects non-text input', () => { assert.throws(() => cleanLines(null), TypeError); });
+import {filterRecords,seasonal,summary,topTaxa,cells,toCSV,snapshotDelta} from '../web/model.mjs';
+const base={id:'1',area:'langley',date:'2024-10-01',month:10,week:40,year:2024,taxon_id:1,name:'Test fungus',common:'Test',rank:'species',quality:'research',license:'cc-by',observer:'one',privacy:'open',latitude:49.1,longitude:-122.6,accuracy:50,captive:false};
+const rows=[base,{...base,id:'2',area:'halifax',privacy:'obscured',latitude:null,longitude:null,accuracy:30000,week:null,date:'2024-10',quality:'needs_id',observer:'two'},{...base,id:'3',month:1,week:53,taxon_id:2,quality:'casual',accuracy:null,captive:true}];
+test('combined quality, region, licence and accuracy filters preserve unknown semantics',()=>{assert.deepEqual(filterRecords(rows,{area:'langley',quality:'research',license:'cc-by',accuracy:100,wild:true}).map(r=>r.id),['1']);assert.equal(filterRecords(rows,{accuracy:1000}).length,1);assert.equal(filterRecords(rows,{privacy:'obscured'}).length,1);assert.equal(filterRecords(rows,{search:'fungus',month:10}).length,2);assert.equal(filterRecords(rows,{cell:'49.1,-122.6'}).length,2);});
+test('weekly chart excludes obscured dates and retains ISO week 53',()=>{assert.equal(seasonal(rows)[9],2);assert.equal(seasonal(rows,'week')[39],1);assert.equal(seasonal(rows,'week')[52],1);assert.equal(seasonal(rows,'week').reduce((a,b)=>a+b),2);});
+test('summary counts taxa rather than implying species and aggregates map cells',()=>{assert.deepEqual(summary(rows),{count:3,taxa:2,observers:2,peak:'Oct',mappable:2});assert.equal(topTaxa(rows)[0].count,2);assert.equal(cells(rows)[0].count,2);assert.equal(cells(rows).length,1);assert.equal(summary([]).peak,'—');});
+test('CSV keeps attribution, quotes and protects formula-prefixed text',()=>{const csv=toCSV([{...base,name:'=HYPERLINK("bad")',observer:'a,"b'}]);assert.ok(csv.includes('"\'=HYPERLINK(""bad"")"'));assert.ok(csv.includes('"a,""b"'));assert.ok(csv.includes('license,observer,privacy'));});
+test('snapshot changes are source record edits not fabricated event history',()=>assert.deepEqual(snapshotDelta([base],[{...base,name:'Reidentified'},{...base,id:'4'}]),{added:1,removed:0,changed:1}));
