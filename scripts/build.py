@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build a browser tool using Python's standard library; no network required."""
 from html import escape
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
@@ -71,6 +72,7 @@ def build(root=ROOT):
             if placeholder not in page:
                 raise ValueError(f"Missing template placeholder: {placeholder}")
             page = page.replace(placeholder, escape(tool[key], quote=True))
+        page = page.replace("{{BUILD_DATE}}", datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"))
         slug = tool["id"]
         on_coolcode = (
             slug != "coolcode-tool-template"

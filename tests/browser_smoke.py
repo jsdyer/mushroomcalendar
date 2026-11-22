@@ -30,7 +30,13 @@ def main():
     options=page.locator('#snapshot option').evaluate_all('(items)=>items.map(x=>x.value)');page.locator('#snapshot').select_option(options[-1]);page.wait_for_function("!document.querySelector('#snapshot').disabled")
     assert page.locator('#error').is_hidden()
     page.screenshot(path=str(screenshots/'desktop.png'),full_page=True)
-    page.set_viewport_size({'width':390,'height':844});assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth');page.screenshot(path=str(screenshots/'mobile.png'),full_page=True)
+    page.set_viewport_size({'width':390,'height':844})
+    page.screenshot(path=str(screenshots/'mobile.png'),full_page=True)
+    geometry=page.evaluate("""() => ({viewport:innerWidth,document:document.documentElement.scrollWidth,
+      wide:[...document.querySelectorAll('body *')].map(el=>({tag:el.tagName,id:el.id,
+        className:typeof el.className==='string'?el.className:'',right:el.getBoundingClientRect().right}))
+        .filter(el=>el.right>innerWidth+1).slice(0,20)})""")
+    assert geometry['document']<=geometry['viewport'],geometry
     assert not errors,errors;browser.close()
    print('Browser checks passed: source data, filters, seasons, privacy map, CSV, archives and mobile subpath')
   finally:server.shutdown()

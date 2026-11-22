@@ -2,7 +2,7 @@
   "id": "mushroomcalendar",
   "title": "Mushroom Calendar",
   "description": "Explore when local fungi were observed around Langley and Halifax, with seasonal patterns, quality filters and a privacy-conscious map.",
-  "category": "nature",
+  "category": "places",
   "tags": [
     "fungi",
     "inaturalist",
@@ -10,13 +10,13 @@
     "langley",
     "halifax"
   ],
-  "icon": "\ud83c\udf44",
+  "icon": "calendar-days",
   "url": "/mushroomcalendar/",
   "source": "https://github.com/jsdyer/mushroomcalendar",
   "hosting": "project",
   "access": "browser",
   "data_info": {
     "mode": "snapshot",
-    "detail": "Public iNaturalist fungi observations from 2023\u20132025 in fixed Langley and Halifax areas, rechecked weekly with retained captures."
+    "detail": "Public iNaturalist fungi observations from 2023–2025 in fixed Langley and Halifax areas, rechecked weekly with retained captures."
   }
 }
