@@ -17,6 +17,7 @@
   "access": "browser",
   "data_info": {
     "mode": "snapshot",
-    "detail": "Public iNaturalist fungi observations from 2023–2025 in fixed Langley and Halifax areas, rechecked weekly with retained captures."
+    "detail": "Public iNaturalist fungi observations from 2023–2025 in fixed Langley and Halifax areas, rechecked weekly with retained captures.",
+    "cadence": "Weekly"
   }
 }
